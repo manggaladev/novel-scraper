@@ -13,17 +13,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from ..settings import (
-    BASE_URL,
-    CATALOGUE_URL,
-    HEADERS,
-    REQUEST_DELAY,
-    MAX_RETRIES,
-    TIMEOUT,
-    MAX_PAGES,
-    MAX_BOOKS,
-    INCLUDE_DETAILS,
-)
+from .. import settings
 from ..utils import (
     clean_text,
     clean_price,
@@ -60,7 +50,7 @@ class NovelSpider:
     
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update(HEADERS)
+        self.session.headers.update(settings.HEADERS)
         self.books_scraped = 0
         self.pages_scraped = 0
         
@@ -74,31 +64,32 @@ class NovelSpider:
         Returns:
             BeautifulSoup object or None on failure
         """
-        for attempt in range(MAX_RETRIES):
+        for attempt in range(settings.MAX_RETRIES):
             try:
                 logger.info(f"Fetching: {url}")
-                response = self.session.get(url, timeout=TIMEOUT)
+                response = self.session.get(url, timeout=settings.TIMEOUT)
                 response.raise_for_status()
                 
                 # Add delay to respect server
-                time.sleep(REQUEST_DELAY)
+                time.sleep(settings.REQUEST_DELAY)
                 
                 return BeautifulSoup(response.text, 'lxml')
                 
             except requests.RequestException as e:
                 logger.warning(f"Attempt {attempt + 1} failed for {url}: {e}")
-                if attempt < MAX_RETRIES - 1:
-                    time.sleep(REQUEST_DELAY * 2)  # Longer delay on retry
+                if attempt < settings.MAX_RETRIES - 1:
+                    time.sleep(settings.REQUEST_DELAY * 2)  # Longer delay on retry
                     
-        logger.error(f"Failed to fetch {url} after {MAX_RETRIES} attempts")
+        logger.error(f"Failed to fetch {url} after {settings.MAX_RETRIES} attempts")
         return None
     
-    def parse_book_card(self, article) -> Optional[dict]:
+    def parse_book_card(self, article, current_url: str) -> Optional[dict]:
         """
         Parse a book card from the listing page.
         
         Args:
             article: BeautifulSoup article element
+            current_url: Current page URL for resolving relative links
             
         Returns:
             Dictionary with book data
@@ -107,7 +98,7 @@ class NovelSpider:
             # Get title and URL
             title_elem = article.find('h3').find('a')
             title = clean_text(title_elem.get('title', ''))
-            book_url = urljoin(BASE_URL, title_elem.get('href', ''))
+            book_url = urljoin(current_url, title_elem.get('href', ''))
             
             # Get price
             price_elem = article.find('p', class_='price_color')
@@ -123,7 +114,7 @@ class NovelSpider:
             
             # Get image URL
             img_elem = article.find('img')
-            image_url = urljoin(BASE_URL, img_elem.get('src', '')) if img_elem else None
+            image_url = urljoin(current_url, img_elem.get('src', '')) if img_elem else None
             
             book = {
                 'id': generate_book_id(book_url),
@@ -202,7 +193,7 @@ class NovelSpider:
             if img_container:
                 img = img_container.find('img')
                 if img:
-                    book['cover_url'] = urljoin(BASE_URL, img.get('src', ''))
+                    book['cover_url'] = urljoin(settings.BASE_URL, img.get('src', ''))
             
             logger.info(f"Scraped details for: {book['title']}")
             
@@ -229,40 +220,7 @@ class NovelSpider:
                 return urljoin(current_url, next_link.get('href'))
         return None
     
-    def scrape_page(self, url: str) -> Generator[dict, None, None]:
-        """
-        Scrape all books from a single page.
-        
-        Args:
-            url: Page URL to scrape
-            
-        Yields:
-            Book dictionaries
-        """
-        soup = self.fetch_page(url)
-        if not soup:
-            return
-        
-        # Find all book articles
-        articles = soup.find_all('article', class_='product_pod')
-        logger.info(f"Found {len(articles)} books on page")
-        
-        for article in articles:
-            # Check if we've reached max books
-            if MAX_BOOKS and self.books_scraped >= MAX_BOOKS:
-                logger.info(f"Reached max books limit: {MAX_BOOKS}")
-                return
-            
-            book = self.parse_book_card(article)
-            if book:
-                # Fetch detailed info if enabled
-                if INCLUDE_DETAILS:
-                    book = self.parse_book_detail(book)
-                
-                self.books_scraped += 1
-                yield book
-    
-    def scrape_all(self, start_url: str = CATALOGUE_URL) -> List[dict]:
+    def scrape_all(self, start_url: str = None) -> List[dict]:
         """
         Scrape all books from the catalogue, handling pagination.
         
@@ -272,19 +230,22 @@ class NovelSpider:
         Returns:
             List of book dictionaries
         """
+        if start_url is None:
+            start_url = settings.CATALOGUE_URL
+            
         books = []
         current_url = start_url
         page_count = 0
         
         logger.info("Starting scraping...")
-        logger.info(f"Target: {BASE_URL}")
-        logger.info(f"Request delay: {REQUEST_DELAY}s")
+        logger.info(f"Target: {settings.BASE_URL}")
+        logger.info(f"Request delay: {settings.REQUEST_DELAY}s")
         logger.info("-" * 50)
         
         while current_url:
             # Check if we've reached max pages
-            if MAX_PAGES and page_count >= MAX_PAGES:
-                logger.info(f"Reached max pages limit: {MAX_PAGES}")
+            if settings.MAX_PAGES and page_count >= settings.MAX_PAGES:
+                logger.info(f"Reached max pages limit: {settings.MAX_PAGES}")
                 break
             
             page_count += 1
@@ -299,13 +260,15 @@ class NovelSpider:
             
             # Parse books from page
             articles = soup.find_all('article', class_='product_pod')
+            logger.info(f"Found {len(articles)} books on page")
+            
             for article in articles:
-                if MAX_BOOKS and self.books_scraped >= MAX_BOOKS:
+                if settings.MAX_BOOKS and self.books_scraped >= settings.MAX_BOOKS:
                     break
                 
-                book = self.parse_book_card(article)
+                book = self.parse_book_card(article, current_url)
                 if book:
-                    if INCLUDE_DETAILS:
+                    if settings.INCLUDE_DETAILS:
                         book = self.parse_book_detail(book)
                     books.append(book)
                     self.books_scraped += 1

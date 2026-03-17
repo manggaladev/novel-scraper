@@ -63,12 +63,12 @@ def clean_price(price_str: Optional[str]) -> Optional[float]:
     return None
 
 
-def parse_rating(rating_class: Optional[str]) -> int:
+def parse_rating(rating_class) -> int:
     """
     Parse rating from star class names.
     
     Args:
-        rating_class: CSS class containing rating (e.g., "Three")
+        rating_class: CSS class containing rating (e.g., "Three") or list of classes
         
     Returns:
         Integer rating (1-5)
@@ -84,10 +84,16 @@ def parse_rating(rating_class: Optional[str]) -> int:
         'five': 5,
     }
     
+    # Handle both string and list-like input
+    if isinstance(rating_class, str):
+        class_text = rating_class.lower()
+    else:
+        # Convert list to string (e.g., ['star-rating', 'Three'] -> 'star-rating Three')
+        class_text = ' '.join(str(c) for c in rating_class).lower()
+    
     # Find rating word in class
-    rating_class_lower = rating_class.lower()
     for word, value in rating_map.items():
-        if word in rating_class_lower:
+        if word in class_text:
             return value
     
     return 0
@@ -129,11 +135,17 @@ def generate_book_id(url: str) -> str:
         Unique identifier string
     """
     # Extract ID from URL pattern like /catalogue/book/title_123/index.html
+    # Try to find _number pattern
+    match = re.search(r'_(\d+)/index\.html$', url)
+    if match:
+        return match.group(1)
+    
+    # Fallback: Try /number/ pattern
     match = re.search(r'/(\d+)/index\.html$', url)
     if match:
         return match.group(1)
     
-    # Fallback: use last part of URL
+    # Last resort: use last part of URL
     parts = url.rstrip('/').split('/')
     return parts[-1] if parts else 'unknown'
 
