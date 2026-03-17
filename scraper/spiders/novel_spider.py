@@ -273,6 +273,11 @@ class NovelSpider:
                     books.append(book)
                     self.books_scraped += 1
             
+            # Check if we've reached max books
+            if settings.MAX_BOOKS and self.books_scraped >= settings.MAX_BOOKS:
+                logger.info(f"Reached max books limit: {settings.MAX_BOOKS}")
+                break
+            
             # Find next page
             current_url = self.get_next_page_url(soup, current_url)
         
