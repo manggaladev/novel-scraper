@@ -270,15 +270,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+MIT License - see [LICENSE](LICENSE) file.
 
 ## 🙏 Acknowledgments
 
 - [books.toscrape.com](https://books.toscrape.com/) for providing a safe scraping sandbox
 - [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) for HTML parsing
 
----
-
-<p align="center">
-  Made with ❤️ by <a href="https://github.com/manggaladev">manggaladev</a>
-</p>
