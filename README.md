@@ -91,7 +91,7 @@ novel-scraper/
 
 ## 📄 License
 
-[MIT License](LICENSE) © 2026 manggaladev
+[MIT License](LICENSE)
 
 ## 🔗 Links
 
