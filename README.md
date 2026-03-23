@@ -4,8 +4,6 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)](https://github.com/manggaladev/novel-scraper)
 
-A Python web scraper for collecting book/novel data from public websites. Output in JSON/CSV format for seeding the [novel-api](https://github.com/manggaladev/novel-api) database.
-
 ## ✨ Features
 
 - 📚 **Scrape book data** - Title, author, description, genre, rating, cover URL
@@ -93,8 +91,3 @@ novel-scraper/
 
 [MIT License](LICENSE)
 
-## 🔗 Links
-
-- [GitHub Repository](https://github.com/manggaladev/novel-scraper)
-- [novel-api](https://github.com/manggaladev/novel-api) - REST API for novels
-- [Issues](https://github.com/manggaladev/novel-scraper/issues)
