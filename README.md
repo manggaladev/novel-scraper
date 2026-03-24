@@ -27,7 +27,6 @@
 
 ```bash
 # Clone
-git clone https://github.com/manggaladev/novel-scraper.git
 cd novel-scraper
 
 # Install
@@ -213,7 +212,6 @@ Contributions welcome! Add new scrapers, improve parsing.
 
 **[⬆ Back to Top](#️-novel-scraper)**
 
-Made with ❤️ by [manggaladev](https://github.com/manggaladev)
 
 **Scrape responsibly! 🕷️**
 
