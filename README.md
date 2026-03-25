@@ -94,7 +94,7 @@ python main.py \
 ```bash
 python main.py import \
   --file output/novels.json \
-  --api-url http://localhost:3000 \
+  --api-url https://api.example.com \
   --token your_jwt_token
 ```
 
